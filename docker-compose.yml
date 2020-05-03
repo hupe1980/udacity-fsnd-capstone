@@ -8,8 +8,8 @@ services:
       - .:/usr/src/app
     ports:
       - '5000:5000'
-    environment:
-      DATABASE_URL: postgresql://postgres@postgres/casting
+    env_file:
+      - .env
   postgres:
     image: postgres:12.2-alpine
     environment:
