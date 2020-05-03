@@ -32,6 +32,9 @@ def get_movies(payload):
 def post_movies(payload):
     body = request.get_json()
 
+    if body is None:
+        abort(400)
+
     title = body.get('title', None)
     release_date = body.get('release_date', None)
     actors = body.get('actors', None)
@@ -59,6 +62,9 @@ def post_movies(payload):
 def patch_movies(payload, movie_id):
     body = request.get_json()
 
+    if body is None:
+        abort(400)
+
     movie = Movie.query.get(movie_id)
 
     title = body.get('title', None)
@@ -76,8 +82,7 @@ def patch_movies(payload, movie_id):
                 release_date, '%Y-%m-%d')
 
         if actors:
-            movie.actors = Actor.query.filter(
-                Actor.id.in_(actors)).all()
+            movie.actors = actors
 
         movie.update()
 
@@ -130,6 +135,9 @@ def get_actors(payload):
 @requires_auth('post:actors')
 def create_actor(payload):
     body = request.get_json()
+
+    if body is None:
+        abort(400)
 
     name = body.get('name', None)
     gender = body.get('gender', None)
