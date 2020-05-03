@@ -82,7 +82,7 @@ def patch_movies(payload, movie_id):
                 release_date, '%Y-%m-%d')
 
         if actors:
-            movie.actors = actors
+            movie.actors = Actor.query.filter(Actor.id.in_(actors)).all()
 
         movie.update()
 

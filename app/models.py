@@ -32,7 +32,7 @@ class Movie(db.Model):
             'id': self.id,
             'title': self.title,
             'release_date': self.release_date,
-            'actors': self.actors
+            'actors': [actor.id for actor in self.actors]
         }
 
 
@@ -43,7 +43,6 @@ class Actor(db.Model):
     name = Column(String, nullable=False)
     age = Column(Integer)
     gender = Column(String)
-    movies = relationship("Movie", secondary=association_table)
 
     def insert(self):
         db.session.add(self)
