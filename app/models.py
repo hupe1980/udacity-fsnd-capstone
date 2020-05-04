@@ -62,4 +62,3 @@ class Actor(db.Model):
             'age': self.age,
             'gender': self.gender
         }
-

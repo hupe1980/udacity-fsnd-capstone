@@ -5,38 +5,42 @@ from mock import patch
 import unittest
 from flask import request, abort
 
+from app.models import Movie, Actor
+from app import create_app, db
+
 API_PREFIX = '/api/v1'
 
 ROLES = {
     "CASTING_ASSISTANT": {
         "permissions": [
-            "get:movies", 
+            "get:movies",
             "get:actors"
         ]
     },
     "CASTING_DIRECTOR": {
         "permissions": [
-            "get:movies", 
-            "get:actors", 
-            "post:actors", 
-            "delete:actors", 
-            "patch:movies", 
+            "get:movies",
+            "get:actors",
+            "post:actors",
+            "delete:actors",
+            "patch:movies",
             "patch:actors"
         ]
     },
     "EXECUTIVE_PRODUCER": {
         "permissions": [
-            "get:movies", 
-            "get:actors", 
-            "post:actors", 
+            "get:movies",
+            "get:actors",
+            "post:actors",
             "delete:actors",
-            "patch:movies", 
-            "patch:actors", 
-            "post:movies",  
+            "patch:movies",
+            "patch:actors",
+            "post:movies",
             "delete:movies"
         ]
     }
 }
+
 
 def mock_requires_auth(permission=''):
     def requires_auth_decorator(f):
@@ -60,11 +64,10 @@ def mock_requires_auth(permission=''):
         return wrapper
     return requires_auth_decorator
 
+
 patch('app.auth.requires_auth', mock_requires_auth).start()
 
-from app.auth import check_permissions, AuthError
-from app.models import Movie, Actor
-from app import create_app, db
+from app.auth import check_permissions, AuthError  # noqa
 
 
 class CastingTestCase(unittest.TestCase):
@@ -79,16 +82,18 @@ class CastingTestCase(unittest.TestCase):
 
         self.new_movie = {'title': 'Title', 'release_date': '2012-12-04'}
 
-        self.update_movie = {'title': 'Patched_Title', 'release_date': '2012-12-04'}
+        self.update_movie = {'title': 'Patched_Title',
+                             'release_date': '2012-12-04'}
 
         self.invalid_movie = {'release_date': '2012-12-04'}
 
         self.new_actor = {'name': 'Name', 'age': 30, 'gender': 'male'}
 
-        self.update_actor = {'name': 'Patched_Name', 'age': 30, 'gender': 'male'}
+        self.update_actor = {'name': 'Patched_Name',
+                             'age': 30, 'gender': 'male'}
 
         self.invalid_actor = {'age': 30, 'gender': 'male'}
-        
+
     def tearDown(self):
         """Executed after reach test"""
         db.session.remove()
@@ -135,7 +140,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(self.new_movie['title'], data['movie']['title'])
 
     def test_post_movies_422(self):
-        res = self.client().post(f'{API_PREFIX}/movies', json=self.invalid_movie,
+        res = self.client().post(f'{API_PREFIX}/movies',
+                                 json=self.invalid_movie,
                                  headers={"ROLE": "EXECUTIVE_PRODUCER"})
         data = json.loads(res.data)
 
@@ -152,7 +158,7 @@ class CastingTestCase(unittest.TestCase):
 
     def test_post_movies_403(self):
         res = self.client().post(f'{API_PREFIX}/movies', json=self.new_movie,
-                                headers={"ROLE": "CASTING_DIRECTOR"})
+                                 headers={"ROLE": "CASTING_DIRECTOR"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 403)
@@ -161,10 +167,11 @@ class CastingTestCase(unittest.TestCase):
 
     def test_patch_movies(self):
         movie = Movie(title='Test')
-        
+
         movie.insert()
 
-        res = self.client().patch(f'{API_PREFIX}/movies/{movie.id}', json=self.update_movie,
+        res = self.client().patch(f'{API_PREFIX}/movies/{movie.id}',
+                                  json=self.update_movie,
                                   headers={"ROLE": "CASTING_DIRECTOR"})
         data = json.loads(res.data)
 
@@ -182,7 +189,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "Authorization header is expected")
 
     def test_patch_movies_403(self):
-        res = self.client().patch(f'{API_PREFIX}/movies/9999', json=self.update_movie,
+        res = self.client().patch(f'{API_PREFIX}/movies/9999',
+                                  json=self.update_movie,
                                   headers={"ROLE": "CASTING_ASSISTANT"})
         data = json.loads(res.data)
 
@@ -191,7 +199,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "Forbidden")
 
     def test_patch_movies_404(self):
-        res = self.client().patch(f'{API_PREFIX}/movies/9999', json=self.update_movie,
+        res = self.client().patch(f'{API_PREFIX}/movies/9999',
+                                  json=self.update_movie,
                                   headers={"ROLE": "CASTING_DIRECTOR"})
         data = json.loads(res.data)
 
@@ -205,7 +214,8 @@ class CastingTestCase(unittest.TestCase):
         movie.insert()
 
         res = self.client().delete(
-            f'{API_PREFIX}/movies/{movie.id}', headers={"ROLE": "EXECUTIVE_PRODUCER"})
+            f'{API_PREFIX}/movies/{movie.id}',
+            headers={"ROLE": "EXECUTIVE_PRODUCER"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -231,7 +241,8 @@ class CastingTestCase(unittest.TestCase):
 
     def test_delete_movies_404(self):
         res = self.client().delete(
-            f'{API_PREFIX}/movies/9999', headers={"ROLE": "EXECUTIVE_PRODUCER"})
+            f'{API_PREFIX}/movies/9999',
+            headers={"ROLE": "EXECUTIVE_PRODUCER"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -243,7 +254,8 @@ class CastingTestCase(unittest.TestCase):
         actor.insert()
 
         res = self.client().get(
-            f'{API_PREFIX}/actors', headers={"ROLE": "CASTING_ASSISTANT"})
+            f'{API_PREFIX}/actors',
+            headers={"ROLE": "CASTING_ASSISTANT"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -269,7 +281,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "Authorization header is expected")
 
     def test_post_actors(self):
-        res = self.client().post(f'{API_PREFIX}/actors', json=self.new_actor,
+        res = self.client().post(f'{API_PREFIX}/actors',
+                                 json=self.new_actor,
                                  headers={"ROLE": "EXECUTIVE_PRODUCER"})
         data = json.loads(res.data)
 
@@ -278,7 +291,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(self.new_actor['name'], data['actor']['name'])
 
     def test_post_actors_422(self):
-        res = self.client().post(f'{API_PREFIX}/actors', json=self.invalid_actor,
+        res = self.client().post(f'{API_PREFIX}/actors',
+                                 json=self.invalid_actor,
                                  headers={"ROLE": "EXECUTIVE_PRODUCER"})
         data = json.loads(res.data)
 
@@ -286,7 +300,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
 
     def test_post_actors_401(self):
-        res = self.client().post(f'{API_PREFIX}/actors', json=self.new_actor)
+        res = self.client().post(f'{API_PREFIX}/actors',
+                                 json=self.new_actor)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 401)
@@ -294,7 +309,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "Authorization header is expected")
 
     def test_post_actors_403(self):
-        res = self.client().post(f'{API_PREFIX}/actors', json=self.new_actor,
+        res = self.client().post(f'{API_PREFIX}/actors',
+                                 json=self.new_actor,
                                  headers={"ROLE": "CASTING_ASSISTANT"})
         data = json.loads(res.data)
 
@@ -307,7 +323,8 @@ class CastingTestCase(unittest.TestCase):
 
         actor.insert()
 
-        res = self.client().patch(f'{API_PREFIX}/actors/{actor.id}', json=self.update_actor,
+        res = self.client().patch(f'{API_PREFIX}/actors/{actor.id}',
+                                  json=self.update_actor,
                                   headers={"ROLE": "CASTING_DIRECTOR"})
         data = json.loads(res.data)
 
@@ -317,7 +334,8 @@ class CastingTestCase(unittest.TestCase):
             self.update_actor['name'], data['actor']['name'])
 
     def test_patch_actors_401(self):
-        res = self.client().patch(f'{API_PREFIX}/actors/9999', json=self.update_actor)
+        res = self.client().patch(
+            f'{API_PREFIX}/actors/9999', json=self.update_actor)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 401)
@@ -325,7 +343,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "Authorization header is expected")
 
     def test_patch_actors_403(self):
-        res = self.client().patch(f'{API_PREFIX}/actors/9999', json=self.update_actor,
+        res = self.client().patch(f'{API_PREFIX}/actors/9999',
+                                  json=self.update_actor,
                                   headers={"ROLE": "CASTING_ASSISTANT"})
         data = json.loads(res.data)
 
@@ -334,7 +353,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "Forbidden")
 
     def test_patch_actors_404(self):
-        res = self.client().patch(f'{API_PREFIX}/actors/9999', json=self.update_actor,
+        res = self.client().patch(f'{API_PREFIX}/actors/9999',
+                                  json=self.update_actor,
                                   headers={"ROLE": "CASTING_DIRECTOR"})
         data = json.loads(res.data)
 
@@ -348,7 +368,8 @@ class CastingTestCase(unittest.TestCase):
         actor.insert()
 
         res = self.client().delete(
-            f'{API_PREFIX}/actors/{actor.id}', headers={"ROLE": "CASTING_DIRECTOR"})
+            f'{API_PREFIX}/actors/{actor.id}',
+            headers={"ROLE": "CASTING_DIRECTOR"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -373,7 +394,8 @@ class CastingTestCase(unittest.TestCase):
         self.assertEqual(data['message'], "Forbidden")
 
     def test_delete_actors_404(self):
-        res = self.client().delete(f'{API_PREFIX}/actors/9999',headers={"ROLE": "CASTING_DIRECTOR"})
+        res = self.client().delete(
+            f'{API_PREFIX}/actors/9999', headers={"ROLE": "CASTING_DIRECTOR"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
